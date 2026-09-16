@@ -68,16 +68,22 @@ func (r *dockerfileApplicationResource) Schema(ctx context.Context, _ resource.S
 				},
 			},
 			"install_command": schema.StringAttribute{
-				MarkdownDescription: "The command to run during the install phase.",
+				MarkdownDescription: "The command to run during the install phase. Omitting the attribute later does not clear the stored command.",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"build_command": schema.StringAttribute{
-				MarkdownDescription: "The command to run during the build phase.",
+				MarkdownDescription: "The command to run during the build phase. Omitting the attribute later does not clear the stored command.",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"start_command": schema.StringAttribute{
-				MarkdownDescription: "The command to run to start the application.",
+				MarkdownDescription: "The command to run to start the application. Omitting the attribute later does not clear the stored command.",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"dockerfile_target_build": schema.StringAttribute{
 				MarkdownDescription: "The target stage for multi-stage Docker builds.",
@@ -166,6 +172,8 @@ func (r *dockerfileApplicationResource) Create(ctx context.Context, req resource
 	flex.NormalizeUnknownString(&plan.GitRepository)
 	flex.NormalizeUnknownString(&plan.GitBranch)
 	flex.NormalizeUnknownString(&plan.BuildPack)
+	flex.NormalizeUnknownString(&plan.BuildCommand)
+	flex.NormalizeUnknownString(&plan.DockerfileTargetBuild)
 
 	// Save partial state so the resource is tracked even if the read-back fails.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
