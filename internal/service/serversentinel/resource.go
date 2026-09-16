@@ -54,13 +54,25 @@ func (r *res) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource
 					"treats Sentinel as mandatory on regular servers, so PATCH extra-key 422s " +
 					"this field (GET remains). Writable on Coolify 4.3.x before that change.",
 			},
-			"is_metrics_enabled":                    schema.BoolAttribute{Optional: true, Computed: true},
-			"is_sentinel_debug_enabled":             schema.BoolAttribute{Optional: true, Computed: true},
-			"sentinel_token":                        schema.StringAttribute{Optional: true, Sensitive: true, MarkdownDescription: "Preserved when GET omits it."},
+			"is_metrics_enabled":        schema.BoolAttribute{Optional: true, Computed: true},
+			"is_sentinel_debug_enabled": schema.BoolAttribute{Optional: true, Computed: true},
+			"sentinel_token": schema.StringAttribute{
+				Optional:            true,
+				Sensitive:           true,
+				MarkdownDescription: "Sentinel agent token. Preserved on refresh when GET omits it. After import, keep the token in configuration; GET typically hides it so import cannot seed state.",
+			},
 			"sentinel_metrics_refresh_rate_seconds": schema.Int64Attribute{Optional: true, Computed: true},
 			"sentinel_metrics_history_days":         schema.Int64Attribute{Optional: true, Computed: true},
 			"sentinel_push_interval_seconds":        schema.Int64Attribute{Optional: true, Computed: true},
-			"sentinel_custom_url":                   schema.StringAttribute{Optional: true},
+			"sentinel_custom_url": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Custom Sentinel push URL. Writable on GET/PATCH `/servers/{uuid}/sentinel` " +
+					"(unlike the read-only copy on `coolify_server`). Max 255 characters. " +
+					"Seeded from GET when Coolify returns a non-empty value; keep it in configuration " +
+					"after import if GET still omits it.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
 		},
 	}
 }
@@ -126,8 +138,10 @@ func flatten(s *client.ServerSentinel, m *model) {
 	} else if m.SentinelPushIntervalSeconds.IsUnknown() {
 		m.SentinelPushIntervalSeconds = types.Int64Null()
 	}
-	if s.SentinelCustomURL != "" && !m.SentinelCustomURL.IsNull() {
+	if s.SentinelCustomURL != "" {
 		m.SentinelCustomURL = types.StringValue(s.SentinelCustomURL)
+	} else if m.SentinelCustomURL.IsUnknown() {
+		m.SentinelCustomURL = types.StringNull()
 	}
 }
 
