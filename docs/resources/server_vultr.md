@@ -49,7 +49,7 @@ variable "vultr_token" {
 - `name` (String) The name of the server.
 - `os_id` (Number) The Vultr operating system ID. Use `coolify_vultr_os` to list available operating systems. Changing this forces a new resource.
 - `plan` (String) The Vultr server type (e.g., `vc2-1c-1gb`). Use `coolify_vultr_plans` to list available plans. Changing this forces a new resource.
-- `private_key_uuid` (String) The UUID of the private key used for SSH authentication.
+- `private_key_uuid` (String) The UUID of the private key used for SSH authentication. Coolify GET often omits this field, so import leaves it empty. Set the same UUID that is already on the server in HCL, or the next apply will PATCH a new SSH key.
 - `region` (String) The Vultr region slug (e.g., `ewr`). Use `coolify_vultr_regions` to list available regions. Changing this forces a new resource.
 
 ### Optional
@@ -64,6 +64,7 @@ variable "vultr_token" {
 - `enable_ipv6` (Boolean) Whether to enable IPv6 on the Vultr instance. Defaults to true to match Coolify.
 - `instant_validate` (Boolean) Whether to validate server connectivity immediately after creation. Defaults to false to match Coolify.
 - `is_build_server` (Boolean) Whether this server is used for building applications.
+- `is_terminal_enabled` (Boolean) Whether the web terminal is enabled for this server. Requires Coolify >= v4.3.0. Coolify defaults to true.
 - `port` (Number) The SSH port of the server.
 - `server_disk_usage_check_frequency` (String) Cron or Coolify human schedule for how often disk usage is checked (e.g., `*/5 * * * *`, `daily`, `@daily`).
 - `server_disk_usage_notification_threshold` (Number) Disk usage percentage at which a notification is sent.
@@ -99,7 +100,6 @@ variable "vultr_token" {
 - `is_sentinel_enabled` (Boolean) Whether the Sentinel monitoring agent is enabled.
 - `is_swarm_manager` (Boolean) Whether this server is a Docker Swarm manager. Read-only (not on public server PATCH allow-list).
 - `is_swarm_worker` (Boolean) Whether this server is a Docker Swarm worker. Read-only (not on public server PATCH allow-list).
-- `is_terminal_enabled` (Boolean) Whether the web terminal is enabled for this server.
 - `is_usable` (Boolean) Whether the server is currently usable for deployments.
 - `logdrain_axiom_api_key` (String, Sensitive) Axiom API key for log drain. Sensitive; read-only.
 - `logdrain_axiom_dataset_name` (String) Axiom dataset name for log drain. Read-only.
@@ -132,5 +132,8 @@ The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/c
 
 ```shell
 #!/bin/sh
+# NOTE: Coolify GET often omits private_key_uuid, so import leaves it empty.
+# Set the same UUID that is already on the server in your .tf config
+# BEFORE running terraform plan, or the next apply will PATCH a new SSH key.
 terraform import coolify_server_vultr.app <server-uuid>
 ```

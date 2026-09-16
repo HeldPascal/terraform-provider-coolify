@@ -54,7 +54,7 @@ resource "coolify_server_hetzner" "example" {
 - `image` (String) The OS image to use (e.g., `ubuntu-24.04`). Use `coolify_hetzner_images` data source to list available images. Changing this forces a new resource.
 - `location` (String) The Hetzner datacenter location (e.g., `fsn1`, `nbg1`). Use `coolify_hetzner_locations` data source to list available locations. Changing this forces a new resource.
 - `name` (String) The name of the server.
-- `private_key_uuid` (String) The UUID of the private key used for SSH authentication.
+- `private_key_uuid` (String) The UUID of the private key used for SSH authentication. Coolify GET often omits this field, so import leaves it empty. Set the same UUID that is already on the server in HCL, or the next apply will PATCH a new SSH key.
 - `server_type` (String) The Hetzner server type (e.g., `cx22`, `cpx31`). Use `coolify_hetzner_server_types` data source to list available types. Changing this forces a new resource.
 
 ### Optional
@@ -73,6 +73,7 @@ resource "coolify_server_hetzner" "example" {
 - `hetzner_ssh_key_ids` (String) Comma-separated list of additional Hetzner SSH key IDs to install on the server (for example `12345,67890`). Coolify's API expects a JSON integer array; the provider parses this string and sends that array. Use `data.coolify_hetzner_ssh_keys` to list available keys. Changing this forces a new resource.
 - `instant_validate` (Boolean) Whether to validate server connectivity immediately after creation.
 - `is_build_server` (Boolean) Whether this server is used for building applications.
+- `is_terminal_enabled` (Boolean) Whether the web terminal is enabled for this server. Requires Coolify >= v4.3.0. Coolify defaults to true.
 - `port` (Number) The SSH port of the server.
 - `server_disk_usage_check_frequency` (String) Cron or Coolify human schedule for how often disk usage is checked (e.g., `*/5 * * * *`, `daily`, `@daily`).
 - `server_disk_usage_notification_threshold` (Number) Disk usage percentage at which a notification is sent.
@@ -107,7 +108,6 @@ resource "coolify_server_hetzner" "example" {
 - `is_sentinel_enabled` (Boolean) Whether the Sentinel monitoring agent is enabled.
 - `is_swarm_manager` (Boolean) Whether this server is a Docker Swarm manager. Read-only (not on public server PATCH allow-list).
 - `is_swarm_worker` (Boolean) Whether this server is a Docker Swarm worker. Read-only (not on public server PATCH allow-list).
-- `is_terminal_enabled` (Boolean) Whether the web terminal is enabled for this server.
 - `is_usable` (Boolean) Whether the server is currently usable for deployments.
 - `logdrain_axiom_api_key` (String, Sensitive) Axiom API key for log drain. Sensitive; read-only.
 - `logdrain_axiom_dataset_name` (String) Axiom dataset name for log drain. Read-only.
@@ -139,5 +139,8 @@ Import is supported using the following syntax:
 The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
+# NOTE: Coolify GET often omits private_key_uuid, so import leaves it empty.
+# Set the same UUID that is already on the server in your .tf config
+# BEFORE running terraform plan, or the next apply will PATCH a new SSH key.
 terraform import coolify_server_hetzner.example <server-uuid>
 ```

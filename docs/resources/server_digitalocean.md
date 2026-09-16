@@ -48,7 +48,7 @@ variable "digitalocean_token" {
 - `cloud_provider_token_uuid` (String) The UUID of the DigitalOcean cloud provider token (from `coolify_cloud_token`). Changing this forces a new resource.
 - `image` (String) The OS image to use (e.g., `ubuntu-24-04-x64`). Use `coolify_digitalocean_images` data source to list available images. Changing this forces a new resource.
 - `name` (String) The name of the server.
-- `private_key_uuid` (String) The UUID of the private key used for SSH authentication.
+- `private_key_uuid` (String) The UUID of the private key used for SSH authentication. Coolify GET often omits this field, so import leaves it empty. Set the same UUID that is already on the server in HCL, or the next apply will PATCH a new SSH key.
 - `region` (String) The DigitalOcean region slug (e.g., `nyc1`). Use `coolify_digitalocean_regions` to list available regions. Changing this forces a new resource.
 - `size` (String) The DigitalOcean server type (e.g., `s-1vcpu-1gb`). Use `coolify_digitalocean_sizes` data source to list available types. Changing this forces a new resource.
 
@@ -64,6 +64,7 @@ variable "digitalocean_token" {
 - `enable_ipv6` (Boolean) Whether to enable IPv6 on the droplet. Defaults to true to match Coolify.
 - `instant_validate` (Boolean) Whether to validate server connectivity immediately after creation. Defaults to false to match Coolify.
 - `is_build_server` (Boolean) Whether this server is used for building applications.
+- `is_terminal_enabled` (Boolean) Whether the web terminal is enabled for this server. Requires Coolify >= v4.3.0. Coolify defaults to true.
 - `monitoring` (Boolean) Whether to enable DigitalOcean monitoring on the droplet. Defaults to true to match Coolify.
 - `port` (Number) The SSH port of the server.
 - `server_disk_usage_check_frequency` (String) Cron or Coolify human schedule for how often disk usage is checked (e.g., `*/5 * * * *`, `daily`, `@daily`).
@@ -99,7 +100,6 @@ variable "digitalocean_token" {
 - `is_sentinel_enabled` (Boolean) Whether the Sentinel monitoring agent is enabled.
 - `is_swarm_manager` (Boolean) Whether this server is a Docker Swarm manager. Read-only (not on public server PATCH allow-list).
 - `is_swarm_worker` (Boolean) Whether this server is a Docker Swarm worker. Read-only (not on public server PATCH allow-list).
-- `is_terminal_enabled` (Boolean) Whether the web terminal is enabled for this server.
 - `is_usable` (Boolean) Whether the server is currently usable for deployments.
 - `logdrain_axiom_api_key` (String, Sensitive) Axiom API key for log drain. Sensitive; read-only.
 - `logdrain_axiom_dataset_name` (String) Axiom dataset name for log drain. Read-only.
@@ -133,5 +133,8 @@ The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/c
 ```shell
 #!/bin/sh
 # Import requires Coolify >= v4.2.0. DigitalOcean create-only fields are empty after import.
+# NOTE: Coolify GET often omits private_key_uuid, so import leaves it empty.
+# Set the same UUID that is already on the server in your .tf config
+# BEFORE running terraform plan, or the next apply will PATCH a new SSH key.
 terraform import coolify_server_digitalocean.app <server-uuid>
 ```
